@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-VFC Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN SYSTEM  — tactical command-center dark mode
+   Primary: #00d4ff (electric cyan)   Accent: #ff6b35 (amber)
+   Success: #00ff88 (matrix green)    Warn: #ffd600 (yellow)
+   Font display: Orbitron   Data/body: IBM Plex Mono / Sans
+═══════════════════════════════════════════════════════════════ */
+:root {
+  --bg-void:    #030508;
+  --bg-panel:   #080d14;
+  --bg-card:    #0c1320;
+  --bg-hover:   #111a28;
+  --border:     #1a2840;
+  --border-glow:#1e3a5f;
+  --cyan:       #00d4ff;
+  --cyan-dim:   #0088aa;
+  --cyan-glow:  rgba(0,212,255,.18);
+  --amber:      #ff6b35;
+  --amber-glow: rgba(255,107,53,.15);
+  --green:      #00ff88;
+  --green-glow: rgba(0,255,136,.15);
+  --yellow:     #ffd600;
+  --red:        #ff3d5a;
+  --purple:     #b388ff;
+  --text-1:     #e8f4fc;
+  --text-2:     #7a9ab8;
+  --text-3:     #3d5a74;
+  --font-display: 'Orbitron', monospace;
+  --font-mono:    'IBM Plex Mono', monospace;
+  --font-body:    'IBM Plex Sans', sans-serif;
+  --radius:     6px;
+  --radius-lg:  10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { background: var(--bg-void); color: var(--text-1); }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-void);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── Scanline overlay ─────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,.08) 2px,
+    rgba(0,0,0,.08) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── Grid pattern background ─────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══ LAYOUT ══════════════════════════════════════════════════ */
+#app { position: relative; z-index: 1; }
+
+/* ── Top bar ──────────────────────────────────────────────────── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  height: 60px;
+  background: linear-gradient(90deg, rgba(0,212,255,.06), transparent);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--cyan);
+  text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,212,255,.3);
+}
+
+.logo span { color: var(--text-2); font-weight: 400; }
+
+.system-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 2px;
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+
+.live-clock {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  letter-spacing: 1px;
+}
+
+/* ── Run simulation button ───────────────────────────────────── */
+.btn-run {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--bg-void);
+  background: var(--cyan);
+  border: none;
+  padding: 9px 20px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all .2s;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+.btn-run::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.2), transparent);
+}
+.btn-run:hover { background: #22e4ff; transform: translateY(-1px); box-shadow: 0 4px 20px var(--cyan-glow); }
+.btn-run:active { transform: translateY(0); }
+.btn-run:disabled { background: var(--text-3); cursor: not-allowed; }
+.btn-run.running { background: var(--amber); animation: pulse-btn 1s ease infinite; }
+@keyframes pulse-btn { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+/* ── Status dot ──────────────────────────────────────────────── */
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--text-3);
+  display: inline-block;
+  transition: all .3s;
+}
+.status-dot.active  { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 2s ease infinite; }
+.status-dot.running { background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: blink .6s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ═══ MAIN GRID ════════════════════════════════════════════════ */
+.main {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ── Section labels ──────────────────────────────────────────── */
+.section-label {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── KPI row ─────────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+@media (max-width: 1400px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 900px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px 14px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .3s, box-shadow .3s;
+  cursor: default;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--cyan);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.kpi-card:hover { border-color: var(--border-glow); box-shadow: 0 0 24px var(--cyan-glow); }
+.kpi-card:hover::before { opacity: 1; }
+.kpi-card.pass::before { opacity: 1; background: var(--green); }
+.kpi-card.fail::before { opacity: 1; background: var(--red); }
+
+.kpi-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.kpi-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1;
+  transition: all .5s;
+}
+.kpi-value.pass { color: var(--green); }
+.kpi-value.fail { color: var(--red); }
+
+.kpi-unit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  margin-left: 4px;
+}
+
+.kpi-badge {
+  position: absolute;
+  top: 14px; right: 14px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+.kpi-badge.pass { background: rgba(0,255,136,.12); color: var(--green); }
+.kpi-badge.fail { background: rgba(255,61,90,.12);  color: var(--red); }
+.kpi-badge.wait { background: rgba(122,154,184,.08); color: var(--text-2); }
+
+.kpi-target {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-3);
+  margin-top: 8px;
+}
+
+/* ═══ CHARTS GRID ══════════════════════════════════════════════ */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.charts-row-2 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 1200px) {
+  .charts-row, .charts-row-2 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .charts-row, .charts-row-2 { grid-template-columns: 1fr; }
+}
+
+/* ── Chart panel ─────────────────────────────────────────────── */
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .3s;
+}
+.panel:hover { border-color: var(--border-glow); }
+
+.panel-corner {
+  position: absolute;
+  width: 14px; height: 14px;
+  border-color: var(--cyan);
+  border-style: solid;
+  opacity: 0.4;
+}
+.panel-corner.tl { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.panel-corner.tr { top: 0; right: 0; border-width: 1px 1px 0 0; }
+.panel-corner.bl { bottom: 0; left: 0; border-width: 0 0 1px 1px; }
+.panel-corner.br { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-title .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
+}
+
+.chart-wrap { position: relative; width: 100%; }
+
+/* ═══ DISTRIBUTION BAR ═════════════════════════════════════════ */
+.dist-row {
+  display: flex;
+  gap: 0;
+  height: 32px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.dist-seg {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  transition: filter .2s;
+  min-width: 30px;
+}
+.dist-seg:hover { filter: brightness(1.3); }
+.dist-seg.vehicle { background: rgba(0,212,255,.35); color: var(--cyan); }
+.dist-seg.fog     { background: rgba(255,107,53,.35); color: var(--amber); }
+.dist-seg.cloud   { background: rgba(179,136,255,.35); color: var(--purple); }
+
+.dist-legend {
+  display: flex; gap: 20px;
+}
+.dist-legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-2);
+}
+.dist-legend-dot {
+  width: 8px; height: 8px; border-radius: 2px;
+}
+
+/* ═══ LOG CONSOLE ══════════════════════════════════════════════ */
+.log-console {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text-2);
+  height: 160px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+.log-console::-webkit-scrollbar { width: 4px; }
+.log-console::-webkit-scrollbar-track { background: transparent; }
+.log-console::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 2px; }
+
+.log-line { display: flex; gap: 10px; }
+.log-line .ts { color: var(--text-3); flex-shrink: 0; }
+.log-line .msg { color: var(--text-2); }
+.log-line .msg.ok  { color: var(--green); }
+.log-line .msg.err { color: var(--red); }
+.log-line .msg.info { color: var(--cyan); }
+
+/* ═══ TABLE ════════════════════════════════════════════════════ */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.data-table th {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-3);
+  letter-spacing: 1.5px;
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.data-table td {
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(26,40,64,.5);
+  color: var(--text-2);
+}
+.data-table tr:hover td { background: var(--bg-hover); }
+
+.tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.tag.vehicle { background: rgba(0,212,255,.12); color: var(--cyan); }
+.tag.fog     { background: rgba(255,107,53,.12); color: var(--amber); }
+.tag.cloud   { background: rgba(179,136,255,.12); color: var(--purple); }
+.tag.pass    { background: rgba(0,255,136,.12); color: var(--green); }
+.tag.fail    { background: rgba(255,61,90,.12);  color: var(--red); }
+.tag.offline { background: rgba(255,214,0,.10);  color: var(--yellow); }
+
+/* ═══ OVERALL BADGE ════════════════════════════════════════════ */
+.overall-banner {
+  padding: 16px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.overall-banner.pass {
+  background: rgba(0,255,136,.05);
+  border-color: rgba(0,255,136,.3);
+}
+.overall-banner.fail {
+  background: rgba(255,61,90,.05);
+  border-color: rgba(255,61,90,.3);
+}
+.overall-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.overall-banner.pass .overall-label { color: var(--green); }
+.overall-banner.fail .overall-label { color: var(--red); }
+.overall-score {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+/* ═══ GAUGE ════════════════════════════════════════════════════ */
+.gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.gauge-svg { transform: rotate(-90deg); }
+
+/* ═══ ANIMATIONS ═══════════════════════════════════════════════ */
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+.panel, .kpi-card { animation: fadeIn .4s ease both; }
+.kpi-card:nth-child(1){animation-delay:.05s}
+.kpi-card:nth-child(2){animation-delay:.10s}
+.kpi-card:nth-child(3){animation-delay:.15s}
+.kpi-card:nth-child(4){animation-delay:.20s}
+.kpi-card:nth-child(5){animation-delay:.25s}
+.kpi-card:nth-child(6){animation-delay:.30s}
+.kpi-card:nth-child(7){animation-delay:.35s}
+
+/* ═══ LOADING STATE ════════════════════════════════════════════ */
+.skeleton {
+  background: linear-gradient(90deg,var(--bg-card),var(--bg-hover),var(--bg-card));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ═══ SCROLLBAR ════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-panel); }
+::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 3px; }
+
+/* ═══ FOOTER ═══════════════════════════════════════════════════ */
+.footer {
+  text-align: center;
+  padding: 24px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 2px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══════════════════════ TOP BAR ══════════════════════════════ -->
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="logo">AI<span>–</span>VFC</div>
+    <div class="system-tag">COMMAND CENTER v2.0</div>
+    <span class="status-dot" id="statusDot"></span>
+    <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-3)" id="statusText">OFFLINE</span>
+  </div>
+  <div class="topbar-right">
+    <div class="live-clock" id="clock">--:--:--</div>
+    <button class="btn-run" id="btnRun" onclick="runSimulation()">▶ RUN SIMULATION</button>
+  </div>
+</header>
+
+<!-- ══════════════════════ MAIN ═════════════════════════════════ -->
+<div class="main">
+
+  <!-- ── Overall status ─────────────────────────────────────── -->
+  <div id="overallBanner" class="overall-banner" style="display:none">
+    <div class="overall-label" id="overallLabel">AWAITING SIMULATION</div>
+    <div class="overall-score" id="overallScore"></div>
+  </div>
+
+  <!-- ── KPI Cards ──────────────────────────────────────────── -->
+  <div>
+    <div class="section-label">Performance Metrics</div>
+    <div class="kpi-grid" id="kpiGrid">
+      <!-- generated by JS -->
+    </div>
+  </div>
+
+  <!-- ── Charts row 1 ───────────────────────────────────────── -->
+  <div>
+    <div class="section-label">Task Execution Analysis</div>
+    <div class="charts-row">
+
+      <!-- Target distribution -->
+      <div class="panel">
+        <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+        <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+        <div class="panel-title"><span class="dot"></span>Execution Target Distribution</div>
+        <div id="distBar" class="dist-row"></div>
+        <div id="distLegend" class="dist-legend"></div>
+        <div class="chart-wrap" style="height:180px;margin-top:16px">
+          <canvas id="chartDist"></canvas>
+        </div>
+      </div>
+
+      <!-- Latency histogram -->
+      <div class="panel">
+        <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+        <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+        <div class="panel-title"><span class="dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></span>Latency Distribution by Layer</div>
+        <div class="chart-wrap" style="height:220px">
+          <canvas id="chartLatency"></canvas>
+        </div>
+      </div>
+
+      <!-- Energy distribution -->
+      <div class="panel">
+        <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+        <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+        <div class="panel-title"><span class="dot" style="background:var(--amber);box-shadow:0 0 6px var(--amber)"></span>Energy per Task (J)</div>
+        <div class="chart-wrap" style="height:220px">
+          <canvas id="chartEnergy"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Charts row 2 ───────────────────────────────────────── -->
+  <div class="charts-row-2">
+
+    <!-- Queue length time series -->
+    <div class="panel">
+      <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+      <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+      <div class="panel-title"><span class="dot" style="background:var(--yellow);box-shadow:0 0 6px var(--yellow)"></span>Queue Length Over Tasks</div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="chartQueue"></canvas>
+      </div>
+    </div>
+
+    <!-- Workload vs cost scatter -->
+    <div class="panel">
+      <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+      <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+      <div class="panel-title"><span class="dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></span>Layer Costs by Workload</div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="chartCosts"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Priority + offline ─────────────────────────────────── -->
+  <div class="charts-row">
+
+    <!-- Resource util by priority -->
+    <div class="panel">
+      <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+      <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+      <div class="panel-title"><span class="dot"></span>Resource Utilisation by Priority</div>
+      <div class="chart-wrap" style="height:180px">
+        <canvas id="chartPriority"></canvas>
+      </div>
+    </div>
+
+    <!-- Offline vs online breakdown -->
+    <div class="panel">
+      <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+      <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+      <div class="panel-title"><span class="dot" style="background:var(--yellow);box-shadow:0 0 6px var(--yellow)"></span>Online / Offline Mode Split</div>
+      <div class="chart-wrap" style="height:180px">
+        <canvas id="chartOffline"></canvas>
+      </div>
+    </div>
+
+    <!-- Handover latency by target -->
+    <div class="panel">
+      <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+      <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+      <div class="panel-title"><span class="dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></span>Handover Latency Distribution</div>
+      <div class="chart-wrap" style="height:180px">
+        <canvas id="chartHandover"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Simulation log ──────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+    <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+    <div class="panel-title"><span class="dot" style="background:var(--text-3);box-shadow:none"></span>Simulation Console</div>
+    <div class="log-console" id="logConsole">
+      <div class="log-line"><span class="ts">00:00:00</span><span class="msg info">AI-VFC Command Center initialised. Click RUN SIMULATION to begin.</span></div>
+    </div>
+  </div>
+
+  <!-- ── Sample task table ───────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+    <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+    <div class="panel-title"><span class="dot"></span>Task Sample (first 20 records)</div>
+    <div style="overflow-x:auto">
+      <table class="data-table" id="taskTable">
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="footer">AI-VFC SIMULATION SYSTEM &nbsp;·&nbsp; INTELLIGENT VEHICULAR FOG COMPUTING &nbsp;·&nbsp; DRL-BASED TASK OFFLOADING</div>
+
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   AI-VFC Dashboard — JavaScript
+═══════════════════════════════════════════════════════════════ */
+const CHARTS = {};
+
+const KPI_DEFS = [
+  { key:'latency_ms',          label:'Task Latency',     unit:'ms',    lo:58,   hi:72   },
+  { key:'energy_J',            label:'Energy / Task',    unit:'J',     lo:0.18, hi:0.24 },
+  { key:'utilization_pct',     label:'Utilisation',      unit:'%',     lo:83,   hi:89   },
+  { key:'offload_success_pct', label:'Offload Success',  unit:'%',     lo:93,   hi:98   },
+  { key:'handover_latency_ms', label:'Handover Latency', unit:'ms',    lo:11,   hi:17   },
+  { key:'queue_length',        label:'Queue Length',     unit:'tasks', lo:1.8,  hi:2.5  },
+  { key:'offline_success_pct', label:'Offline Success',  unit:'%',     lo:86,   hi:91   },
+];
+
+Chart.defaults.color = '#7a9ab8';
+Chart.defaults.borderColor = '#1a2840';
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 10;
+
+// ── Clock ──────────────────────────────────────────────────────
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toTimeString().slice(0,8);
+}, 1000);
+document.getElementById('clock').textContent = new Date().toTimeString().slice(0,8);
+
+// ── Status indicator ──────────────────────────────────────────
+function setStatus(state) {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  const map = {
+    offline: ['','NO DATA'],
+    ready:   ['active','DATA LOADED'],
+    running: ['running','SIMULATING...'],
+  };
+  const [cls, label] = map[state] || map.offline;
+  dot.className = `status-dot ${cls}`;
+  text.textContent = label;
+}
+
+// ── Log console ───────────────────────────────────────────────
+function appendLog(msg) {
+  const con = document.getElementById('logConsole');
+  const ts = new Date().toTimeString().slice(0,8);
+  let cls = '';
+  if (/PASS|Done|complete|success/i.test(msg)) cls = 'ok';
+  else if (/ERROR|FAIL/i.test(msg)) cls = 'err';
+  else if (/Start|Load|\[Main\]|\[Sim/i.test(msg)) cls = 'info';
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = `<span class="ts">${ts}</span><span class="msg ${cls}">${msg.replace(/</g,'&lt;')}</span>`;
+  con.appendChild(div);
+  con.scrollTop = con.scrollHeight;
+}
+
+// ── KPI grid ──────────────────────────────────────────────────
+function renderKPIs(metrics) {
+  const grid = document.getElementById('kpiGrid');
+  grid.innerHTML = '';
+  KPI_DEFS.forEach(d => {
+    const v = metrics[d.key];
+    const valid = v !== undefined && v !== null && !isNaN(v);
+    const pass = valid && v >= d.lo && v <= d.hi;
+    const status = !valid ? 'wait' : (pass ? 'pass' : 'fail');
+    const disp = !valid ? '—' : v.toFixed(d.unit==='J' ? 4 : 2);
+    const card = document.createElement('div');
+    card.className = `kpi-card ${status}`;
+    card.innerHTML = `
+      <div class="kpi-label">${d.label}</div>
+      <div class="kpi-value ${status}">${disp}<span class="kpi-unit">${d.unit}</span></div>
+      <div class="kpi-badge ${status}">${status==='wait'?'PENDING':(pass?'PASS':'FAIL')}</div>
+      <div class="kpi-target">Target [${d.lo} – ${d.hi}]</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function renderOverall(metrics) {
+  const banner = document.getElementById('overallBanner');
+  const label  = document.getElementById('overallLabel');
+  const score  = document.getElementById('overallScore');
+  banner.style.display = 'flex';
+  const passes = KPI_DEFS.filter(d => {
+    const v = metrics[d.key];
+    return v !== null && v !== undefined && !isNaN(v) && v >= d.lo && v <= d.hi;
+  }).length;
+  const ok = passes === KPI_DEFS.length;
+  banner.className = `overall-banner ${ok?'pass':'fail'}`;
+  label.textContent = ok ? '✦ ALL SYSTEMS NOMINAL' : '⚠ PERFORMANCE DEVIATION DETECTED';
+  score.textContent = `${passes} / ${KPI_DEFS.length} METRICS PASSING`;
+}
+
+// ── Distribution bar ──────────────────────────────────────────
+function renderDistBar(dist, total) {
+  const bar = document.getElementById('distBar');
+  const leg = document.getElementById('distLegend');
+  bar.innerHTML = ''; leg.innerHTML = '';
+  const dColors = {vehicle:'var(--cyan)', fog:'var(--amber)', cloud:'var(--purple)'};
+  ['vehicle','fog','cloud'].forEach(l => {
+    const n = dist[l]||0;
+    const pct = total>0 ? n/total*100 : 0;
+    const seg = document.createElement('div');
+    seg.className = `dist-seg ${l}`;
+    seg.style.width = pct+'%';
+    seg.textContent = pct>8 ? Math.round(pct)+'%' : '';
+    seg.title = `${l}: ${n} tasks`;
+    bar.appendChild(seg);
+    const item = document.createElement('div');
+    item.className = 'dist-legend-item';
+    item.innerHTML = `<div class="dist-legend-dot" style="background:${dColors[l]}"></div>
+      <span>${l.toUpperCase()} <strong style="color:var(--text-1)">${n}</strong></span>`;
+    leg.appendChild(item);
+  });
+}
+
+// ── Histogram helper ──────────────────────────────────────────
+function histogram(arr, bins=22) {
+  if (!arr||!arr.length) return {labels:[],counts:[]};
+  const min=Math.min(...arr), max=Math.max(...arr);
+  const step=(max-min)/bins||1;
+  const counts=Array(bins).fill(0);
+  const labels=[];
+  for(let i=0;i<bins;i++) labels.push((min+i*step).toFixed(2));
+  arr.forEach(v=>{let i=Math.min(bins-1,Math.floor((v-min)/step));counts[i]++;});
+  return {labels,counts};
+}
+
+function destroyChart(id) {
+  if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
+}
+
+// ── All charts ────────────────────────────────────────────────
+function renderCharts(metrics, sim) {
+
+  // Donut: target distribution
+  destroyChart('dist');
+  CHARTS['dist'] = new Chart(document.getElementById('chartDist'),{
+    type:'doughnut',
+    data:{
+      labels:['VEHICLE','FOG','CLOUD'],
+      datasets:[{
+        data:['vehicle','fog','cloud'].map(l=>metrics.target_distribution[l]||0),
+        backgroundColor:['rgba(0,212,255,.7)','rgba(255,107,53,.7)','rgba(179,136,255,.7)'],
+        borderColor:'#0c1320', borderWidth:3, hoverOffset:6,
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:true,cutout:'65%',
+      plugins:{legend:{position:'bottom',labels:{color:'#7a9ab8',padding:10,boxWidth:10,font:{size:10}}}}}
+  });
+
+  // Area: latency by layer
+  destroyChart('latency');
+  const latDatasets = ['vehicle','fog','cloud'].map((l,i)=>{
+    const clr = [['rgba(0,212,255,','rgba(0,212,255,.2)'],['rgba(255,107,53,','rgba(255,107,53,.2)'],['rgba(179,136,255,','rgba(179,136,255,.2)']];
+    const vals = sim.chosen_target.map((t,j)=>t===l?sim.eff_latency_ms[j]:null).filter(v=>v!==null);
+    if(!vals.length) return null;
+    const h = histogram(vals, 20);
+    return {label:l.toUpperCase(),data:h.counts,borderColor:clr[i][0]+'1)',backgroundColor:clr[i][1],fill:true,tension:0.4,pointRadius:0};
+  }).filter(Boolean);
+  const latLabels = histogram(sim.eff_latency_ms, 20).labels;
+  CHARTS['latency'] = new Chart(document.getElementById('chartLatency'),{
+    type:'line', data:{labels:latLabels, datasets:latDatasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7a9ab8',boxWidth:10,font:{size:10}}}},
+      scales:{x:{ticks:{color:'#3d5a74',maxTicksLimit:6},grid:{color:'#1a2840'}},
+              y:{ticks:{color:'#3d5a74'},grid:{color:'#1a2840'}}}}
+  });
+
+  // Bar: energy
+  destroyChart('energy');
+  const eh = histogram(sim.eff_energy_J, 22);
+  CHARTS['energy'] = new Chart(document.getElementById('chartEnergy'),{
+    type:'bar', data:{labels:eh.labels,datasets:[{label:'Tasks',data:eh.counts,
+      backgroundColor:'rgba(255,107,53,.5)',borderColor:'rgba(255,107,53,.9)',borderWidth:1,borderRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#3d5a74',maxTicksLimit:6},grid:{color:'#1a2840'}},
+              y:{ticks:{color:'#3d5a74'},grid:{color:'#1a2840'}}}}
+  });
+
+  // Line: queue
+  destroyChart('queue');
+  const raw = sim.queue_length;
+  const step = Math.max(1,Math.floor(raw.length/120));
+  const rolling = raw.map((_,i,a)=>{const w=Math.min(15,i+1);return a.slice(i-w+1,i+1).reduce((s,v)=>s+v,0)/w;});
+  const qSamp = rolling.filter((_,i)=>i%step===0);
+  CHARTS['queue'] = new Chart(document.getElementById('chartQueue'),{
+    type:'line',
+    data:{labels:qSamp.map((_,i)=>i*step),
+      datasets:[{label:'Rolling Avg',data:qSamp,borderColor:'rgba(255,214,0,.9)',
+        backgroundColor:'rgba(255,214,0,.08)',fill:true,tension:0.4,pointRadius:0,borderWidth:1.5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7a9ab8',boxWidth:10,font:{size:10}}}},
+      scales:{x:{title:{display:true,text:'Task Index',color:'#3d5a74',font:{size:9}},ticks:{color:'#3d5a74',maxTicksLimit:8},grid:{color:'#1a2840'}},
+              y:{title:{display:true,text:'Queue',color:'#3d5a74',font:{size:9}},ticks:{color:'#3d5a74'},grid:{color:'#1a2840'}}}}
+  });
+
+  // Scatter: cost by workload
+  destroyChart('costs');
+  const ns = Math.max(1,Math.floor(sim.workload_scaled.length/80));
+  const ws = sim.workload_scaled.filter((_,i)=>i%ns===0);
+  CHARTS['costs'] = new Chart(document.getElementById('chartCosts'),{
+    type:'scatter',
+    data:{datasets:[
+      {label:'Vehicle',data:ws.map((x,i)=>({x,y:sim.cost_vehicle[i*ns]})),backgroundColor:'rgba(0,212,255,.4)',pointRadius:3},
+      {label:'Fog',    data:ws.map((x,i)=>({x,y:sim.cost_fog[i*ns]})),   backgroundColor:'rgba(255,107,53,.4)',pointRadius:3},
+      {label:'Cloud',  data:ws.map((x,i)=>({x,y:sim.cost_cloud[i*ns]})), backgroundColor:'rgba(179,136,255,.4)',pointRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7a9ab8',boxWidth:8,font:{size:10}}}},
+      scales:{x:{title:{display:true,text:'Workload Scaled',color:'#3d5a74',font:{size:9}},ticks:{color:'#3d5a74',maxTicksLimit:6},grid:{color:'#1a2840'}},
+              y:{title:{display:true,text:'Cost',color:'#3d5a74',font:{size:9}},ticks:{color:'#3d5a74'},grid:{color:'#1a2840'}}}}
+  });
+
+  // Bar: utilisation by priority
+  destroyChart('priority');
+  const pUtils = [1,2,3].map(p=>{
+    const vals = sim.Vehicle_Priority.map((vp,i)=>vp===p?sim.resource_utilization_pct[i]:null).filter(v=>v!==null);
+    return vals.length?vals.reduce((s,v)=>s+v,0)/vals.length:0;
+  });
+  CHARTS['priority'] = new Chart(document.getElementById('chartPriority'),{
+    type:'bar',
+    data:{labels:['Priority 1','Priority 2','Priority 3'],
+      datasets:[{label:'Avg Util (%)',data:pUtils,
+        backgroundColor:['rgba(0,212,255,.5)','rgba(255,107,53,.5)','rgba(0,255,136,.5)'],
+        borderColor:['rgba(0,212,255,.9)','rgba(255,107,53,.9)','rgba(0,255,136,.9)'],
+        borderWidth:1, borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#3d5a74'},grid:{display:false}},
+              y:{min:80,max:90,ticks:{color:'#3d5a74'},grid:{color:'#1a2840'}}}}
+  });
+
+  // Doughnut: offline split
+  destroyChart('offline');
+  const onCount  = sim.is_offline.filter(v=>!v).length;
+  const offCount = sim.is_offline.filter(v=>v).length;
+  CHARTS['offline'] = new Chart(document.getElementById('chartOffline'),{
+    type:'doughnut',
+    data:{labels:['ONLINE','OFFLINE'],
+      datasets:[{data:[onCount,offCount],
+        backgroundColor:['rgba(0,212,255,.65)','rgba(255,214,0,.65)'],
+        borderColor:'#0c1320', borderWidth:3, hoverOffset:5}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{color:'#7a9ab8',padding:10,boxWidth:10,font:{size:10}}}}}
+  });
+
+  // Bar: handover latency
+  destroyChart('handover');
+  const hh = histogram(sim.handover_latency_ms, 20);
+  CHARTS['handover'] = new Chart(document.getElementById('chartHandover'),{
+    type:'bar', data:{labels:hh.labels,datasets:[{label:'Tasks',data:hh.counts,
+      backgroundColor:'rgba(0,255,136,.45)',borderColor:'rgba(0,255,136,.9)',borderWidth:1,borderRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#3d5a74',maxTicksLimit:6},grid:{color:'#1a2840'}},
+              y:{ticks:{color:'#3d5a74'},grid:{color:'#1a2840'}}}}
+  });
+}
+
+// ── Task table ────────────────────────────────────────────────
+function renderTable(sim) {
+  const cols = ['chosen_target','eff_latency_ms','eff_energy_J',
+                 'resource_utilization_pct','handover_latency_ms',
+                 'queue_length','is_offline','offload_success'];
+  const lbls = {chosen_target:'Layer',eff_latency_ms:'Latency (ms)',
+    eff_energy_J:'Energy (J)',resource_utilization_pct:'Util (%)',
+    handover_latency_ms:'Handover (ms)',queue_length:'Queue',
+    is_offline:'Mode',offload_success:'Success'};
+  document.getElementById('tableHead').innerHTML = cols.map(c=>`<th>${lbls[c]}</th>`).join('');
+  const body = document.getElementById('tableBody');
+  body.innerHTML = '';
+  const n = Math.min(20, sim.chosen_target?.length||0);
+  for(let i=0;i<n;i++){
+    const tr=document.createElement('tr');
+    tr.innerHTML=cols.map(c=>{
+      const v=sim[c]?.[i];
+      if(c==='chosen_target') return `<td><span class="tag ${v}">${(v||'').toUpperCase()}</span></td>`;
+      if(c==='is_offline') return `<td>${v?'<span class="tag offline">OFFLINE</span>':'<span class="tag pass">ONLINE</span>'}</td>`;
+      if(c==='offload_success') return `<td>${v?'<span class="tag pass">✓</span>':'<span class="tag fail">✗</span>'}</td>`;
+      if(typeof v==='number') return `<td>${v.toFixed(3)}</td>`;
+      return `<td>${v??'—'}</td>`;
+    }).join('');
+    body.appendChild(tr);
+  }
+}
+
+// ── Load all data ─────────────────────────────────────────────
+async function loadData() {
+  try {
+    const [mRes, sRes] = await Promise.all([
+      fetch('/api/metrics'), fetch('/api/simulation')
+    ]);
+    if(!mRes.ok||!sRes.ok) return false;
+    const metrics = await mRes.json();
+    const simData  = (await sRes.json()).data;
+
+    renderKPIs(metrics);
+    renderOverall(metrics);
+    renderDistBar(metrics.target_distribution, metrics.n_tasks);
+    renderCharts(metrics, simData);
+    renderTable(simData);
+    setStatus('ready');
+    return true;
+  } catch(e) { console.error(e); return false; }
+}
+
+// ── Run simulation ────────────────────────────────────────────
+let seenLines = 0, pollTimer = null;
+
+async function runSimulation() {
+  const btn = document.getElementById('btnRun');
+  btn.disabled = true; btn.classList.add('running'); btn.textContent = '⏳ RUNNING…';
+  setStatus('running'); seenLines = 0;
+  appendLog('Dispatching simulation request…');
+
+  await fetch('/api/run',{method:'POST'});
+
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async()=>{
+    const s = await fetch('/api/run/status').then(r=>r.json());
+    s.log.slice(seenLines).forEach(l=>appendLog(l));
+    seenLines = s.log.length;
+    if(!s.running){
+      clearInterval(pollTimer);
+      appendLog('Simulation complete — refreshing dashboard…');
+      btn.disabled=false; btn.classList.remove('running'); btn.textContent='▶ RUN SIMULATION';
+      await loadData();
+    }
+  }, 600);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+(async()=>{
+  renderKPIs({});
+  const status = await fetch('/api/status').then(r=>r.json());
+  if(status.has_results){
+    appendLog('Existing results found — loading data…');
+    const ok = await loadData();
+    if(ok) appendLog('Dashboard loaded successfully.');
+  } else {
+    appendLog('No simulation results found. Click ▶ RUN SIMULATION to begin.');
+    setStatus('offline');
+  }
+})();
+</script>
+</body>
+</html>
