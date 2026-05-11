@@ -119,21 +119,6 @@ The AI-VFC framework follows a three-layer hierarchical architecture:
 
 ---
 
-## Technologies Used
-
-* Python
-* Deep Reinforcement Learning (DRL)
-* Federated Learning (FL)
-* LSTM Networks
-* NS-3
-* SUMO
-* MATLAB
-* VANET
-* Edge Computing
-* Intelligent Transportation Systems (ITS)
-
----
-
 ## Optimization Model
 
 The framework uses a multi-objective optimization model for adaptive task execution:
@@ -177,19 +162,6 @@ Key projected improvements include:
 
 ---
 
-## Expected Results
-
-Compared to conventional Vehicular Fog Computing approaches, the proposed AI-VFC framework achieves:
-
-* ~35–40% reduction in latency
-* ~32–38% energy savings
-* ~98% anomaly detection accuracy
-* Improved handover continuity
-* Better fog resource utilization
-* Offline operational resilience during cloud disconnection
-
----
-
 ## Applications
 
 * Intelligent Transportation Systems (ITS)
@@ -209,16 +181,6 @@ Compared to conventional Vehicular Fog Computing approaches, the proposed AI-VFC
 * Integration with blockchain-based trust mechanisms
 * 6G-enabled Vehicular Fog Computing support
 * Digital Twin integration for predictive simulations
-
----
-
-## Future Enhancements
-
-* Blockchain-based trust management
-* 6G-enabled Vehicular Fog Computing
-* Digital Twin integration
-* Lightweight AI for edge devices
-* Advanced Federated Learning optimization
 
 ---
 
