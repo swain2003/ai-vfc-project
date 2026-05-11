@@ -29,6 +29,15 @@ The framework is designed to support real-time vehicular communication, edge com
 
 ---
 
+## Objectives
+
+* Design a conceptual architecture for Vehicular Fog Computing
+* Implement an intelligent decision engine for efficient task allocation
+* Optimize execution decisions using latency, energy, and workload metrics
+* Analyze system performance using simulation-based evaluation metrics
+
+---
+
 ## Features
 
 * AI-driven Vehicular Fog Computing architecture
@@ -65,6 +74,48 @@ The AI-VFC framework follows a three-layer hierarchical architecture:
 * Performs global model training and analytics
 * Aggregates federated learning updates
 * Maintains policy and system-wide optimization
+
+---
+
+## Tech Stack
+
+### Programming Languages
+
+* Python
+
+### AI & Machine Learning
+
+* Deep Reinforcement Learning (DRL)
+* Federated Learning (FL)
+* LSTM Networks
+
+### Simulation & Research Tools
+
+* NS-3
+* SUMO
+* MATLAB
+
+### Web Technologies
+
+* HTML
+* CSS
+
+### Core Domains
+
+* VANET
+* Edge Computing
+* Intelligent Transportation Systems (ITS)
+
+---
+
+## Methodology
+
+1. Designed the conceptual AI-VFC framework for Vehicular Fog Computing.
+2. Implemented the architecture into a working simulation-oriented system using Python.
+3. Developed a DRL-based intelligent decision engine for optimized task execution.
+4. Built LSTM-based mobility prediction and proactive RSU handover mechanisms.
+5. Integrated Federated Learning for privacy-preserving distributed model training.
+6. Evaluated system performance using simulation datasets and analytical metrics.
 
 ---
 
@@ -111,6 +162,21 @@ Where:
 
 ---
 
+## Results
+
+The AI-VFC framework demonstrates improved task allocation efficiency by dynamically selecting execution environments across Vehicle, Fog, and Cloud layers based on latency, energy consumption, and workload constraints.
+
+Key projected improvements include:
+
+* ~35–40% reduction in latency
+* ~32–38% energy savings
+* ~98% anomaly detection accuracy
+* Reduced handover delay
+* Better fog resource utilization
+* Offline operational resilience during cloud disconnection
+
+---
+
 ## Expected Results
 
 Compared to conventional Vehicular Fog Computing approaches, the proposed AI-VFC framework achieves:
@@ -135,6 +201,17 @@ Compared to conventional Vehicular Fog Computing approaches, the proposed AI-VFC
 
 ---
 
+## Future Scope
+
+* Integration with real-time vehicular datasets
+* Enhancement using advanced AI/ML optimization models
+* Real-world deployment in distributed vehicular environments
+* Integration with blockchain-based trust mechanisms
+* 6G-enabled Vehicular Fog Computing support
+* Digital Twin integration for predictive simulations
+
+---
+
 ## Future Enhancements
 
 * Blockchain-based trust management
@@ -142,6 +219,90 @@ Compared to conventional Vehicular Fog Computing approaches, the proposed AI-VFC
 * Digital Twin integration
 * Lightweight AI for edge devices
 * Advanced Federated Learning optimization
+
+---
+
+## Project Status
+
+Research paper based on this framework is currently in preparation.
+
+---
+
+## How to Run the Project
+
+Follow the steps below to set up and run the AI-VFC project locally.
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/SilentEyes-0/ai_vfc_project.git
+cd ai_vfc_project
+```
+
+### 2. Create a Results Directory
+
+Create a `Results` folder inside the project root directory for storing generated outputs and evaluation results.
+
+```bash
+mkdir Results
+```
+
+### 3. Create a Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+### 4. Activate the Virtual Environment
+
+#### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+#### Linux / macOS
+
+```bash
+source venv/bin/activate
+```
+
+### 5. Install Required Dependencies
+
+```bash
+pip install numpy pandas matplotlib flask
+```
+
+### 6. Run the Application
+
+```bash
+python app.py
+```
+
+### 7. Open in Browser
+
+After running the application, open your browser and visit:
+
+```text
+http://127.0.0.1:5000
+```
+
+---
+
+## Project Structure
+
+```text
+ai_vfc_project/
+│
+├── app.py
+├── Results/
+├── static/
+├── templates/
+├── dataset/
+├── models/
+├── README.md
+└── requirements.txt
+```
 
 ---
 
