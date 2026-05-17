@@ -149,7 +149,16 @@ def api_dataset_preview():
 
 # ─────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    import os
+
+    port = int(os.environ.get("PORT", 5000))
+
     print("\n" + "=" * 58)
-    print("  AI-VFC Dashboard  →  http://localhost:5000")
+    print(f"  AI-VFC Dashboard  →  http://localhost:{port}")
     print("=" * 58 + "\n")
-    app.run(debug=True, port=5000, use_reloader=False)
+
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False
+    )
