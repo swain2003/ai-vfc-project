@@ -212,7 +212,7 @@ mkdir Results
 ### 3. Create a Virtual Environment
 
 ```bash
-python -m venv venv
+python -m venv .venv
 ```
 
 ### 4. Activate the Virtual Environment
