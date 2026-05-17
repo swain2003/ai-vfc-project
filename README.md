@@ -197,56 +197,59 @@ Follow the steps below to set up and run the AI-VFC project locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/SilentEyes-0/ai_vfc_project.git
-cd ai_vfc_project
+git clone https://github.com/swain2003/ai-vfc-project.git
+cd ai-vfc-project
 ```
 
-### 2. Create a Results Directory
-
-Create a `Results` folder inside the project root directory for storing generated outputs and evaluation results.
-
-```bash
-mkdir Results
-```
-
-### 3. Create a Virtual Environment
+### 2. Create a Virtual Environment
 
 ```bash
 python -m venv .venv
 ```
 
-### 4. Activate the Virtual Environment
+### 3. Activate the Virtual Environment
 
 #### Windows
 
 ```bash
-venv\Scripts\activate
+.venv\Scripts\activate
 ```
 
 #### Linux / macOS
 
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
-### 5. Install Required Dependencies
+### 4. Install Required Dependencies
 
 ```bash
-pip install numpy pandas matplotlib flask
+pip install pandas matplotlib flask
 ```
 
-### 6. Run the Application
+### 5. Run the Simulation (CLI)
 
 ```bash
-python app.py
+python main.py
 ```
 
-### 7. Open in Browser
+Simulation outputs are written to `results/` (auto-created), including:
 
-After running the application, open your browser and visit:
+- `metrics.txt`
+- `metrics.json`
+- `simulation_output.csv`
+- plot images (`plot_*.png`)
+
+### 6. Run the Dashboard (Optional)
+
+```bash
+python dashboard/app.py
+```
+
+Then open:
 
 ```text
-http://127.0.0.1:5000
+http://localhost:5000
 ```
 
 ---
@@ -254,16 +257,19 @@ http://127.0.0.1:5000
 ## Project Structure
 
 ```text
-ai_vfc_project/
+ai-vfc-project/
 │
-├── app.py
-├── Results/
-├── static/
-├── templates/
-├── dataset/
-├── models/
+├── main.py
+├── config/
+├── core/
+├── dashboard/
+│   ├── app.py
+│   └── templates/
+├── data/
+├── evaluation/
+├── utils/
 ├── README.md
-└── requirements.txt
+└── LICENSE
 ```
 
 ---
