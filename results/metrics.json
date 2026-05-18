@@ -1,0 +1,16 @@
+{
+  "latency_ms": 66.135,
+  "energy_J": 0.2167,
+  "utilization_pct": 85.92,
+  "offload_success_pct": 94.62,
+  "handover_latency_ms": 13.979,
+  "queue_length": 2.102,
+  "offline_success_pct": 89.92,
+  "n_tasks": 799,
+  "n_offline": 238,
+  "target_distribution": {
+    "cloud": 391,
+    "fog": 218,
+    "vehicle": 190
+  }
+}
