@@ -29,6 +29,14 @@ The framework is designed to support real-time vehicular communication, edge com
 
 ---
 
+## Deployed Application
+
+Live dashboard deployment:
+
+**https://ai-vfc-project.onrender.com/**
+
+---
+
 ## Objectives
 
 * Design a conceptual architecture for Vehicular Fog Computing
@@ -54,26 +62,34 @@ The framework is designed to support real-time vehicular communication, edge com
 
 ## System Architecture
 
-The AI-VFC framework follows a three-layer hierarchical architecture:
+The AI-VFC framework follows a three-layer hierarchical architecture, with simulation and dashboard components in this repository:
 
 ### 1. Vehicle Layer
 
-* Collects data from sensors, GPS, LiDAR, and onboard units
-* Performs local preprocessing and inference
-* Supports V2V, V2I, and V2F communication
+* Collects sensor and mobility inputs
+* Generates tasks with workload, latency, and priority attributes
+* Supports V2V, V2I, and V2F communication contexts
 
 ### 2. Fog Layer
 
-* Handles task offloading and resource allocation
-* Executes AI-based workload management
-* Performs anomaly detection and mobility prediction
-* Enables low-latency edge processing through RSUs and edge servers
+* Performs edge-side task offloading decisions
+* Applies AI-based optimization for latency/energy trade-offs
+* Handles queueing, handover sensitivity, and offline-aware execution
 
 ### 3. Cloud Layer
 
-* Performs global model training and analytics
-* Aggregates federated learning updates
-* Maintains policy and system-wide optimization
+* Processes high-latency/non-urgent workloads
+* Supports global analytics and model updates
+* Provides coordination and policy-level optimization
+
+### Repository Architecture Mapping
+
+* `main.py` → end-to-end simulation runner
+* `core/` → simulation logic, decision engine, and cost function
+* `evaluation/` → metrics computation and performance analysis
+* `dashboard/app.py` → Flask dashboard + API endpoints
+* `utils/` → reporting, export, and plotting helpers
+* `config/` → file paths and runtime settings
 
 ---
 
@@ -186,7 +202,7 @@ Key projected improvements include:
 
 ## Project Status
 
-Research paper based on this framework is currently in preparation.
+Research paper based on this framework is submitted for publication.
 
 ---
 
@@ -224,7 +240,7 @@ source .venv/bin/activate
 ### 4. Install Required Dependencies
 
 ```bash
-pip install pandas matplotlib flask
+pip install -r requirements.txt
 ```
 
 ### 5. Run the Simulation (CLI)
@@ -252,31 +268,47 @@ Then open:
 http://localhost:5000
 ```
 
+### 7. Open the Deployed Dashboard (Optional)
+
+```text
+https://ai-vfc-project.onrender.com/
+```
+
 ---
 
 ## Project Structure
 
 ```text
 ai-vfc-project/
-│
 ├── main.py
+├── requirements.txt
+├── render.yaml
 ├── config/
+│   └── settings.py
 ├── core/
+│   ├── simulator.py
+│   ├── decision_engine.py
+│   └── cost_function.py
 ├── dashboard/
 │   ├── app.py
 │   └── templates/
-├── data/
 ├── evaluation/
+│   └── metrics.py
 ├── utils/
+│   └── io_utils.py
+├── data/
+│   ├── ai_vfc_offline_extended.csv
+│   └── ai_vfc_offline_extended2.csv
 ├── README.md
 └── LICENSE
 ```
 
 ---
 
-## Author
+## Authors
 
 * Anubhaba Swain
+* Contributors to this repository
 
 ---
 
