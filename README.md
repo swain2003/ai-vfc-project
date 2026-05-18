@@ -202,7 +202,7 @@ Key projected improvements include:
 
 ## Project Status
 
-Research paper based on this framework is currently in preparation.
+Research paper based on this framework is submitted for publication.
 
 ---
 
